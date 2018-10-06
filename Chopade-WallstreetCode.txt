@@ -1,0 +1,103 @@
+Sub Wallstreet():
+For Each ws In Worksheets
+
+'Defining Variables and limits for easy part
+Dim Ticker As String
+Dim Volume As Double
+    Volume = 0
+Dim StockOpen As Double
+Dim StockClose As Double
+Dim YearlyChange As Double
+Dim Summary As Integer
+    Summary = 2
+LastRow = ws.Cells(Rows.Count, 1).End(xlUp).Row
+
+'Setting up the first summary table
+ws.Cells(1, 9).Value = "Ticker"
+ws.Cells(1, 10).Value = "Yearly Change"
+ws.Cells(1, 11).Value = "Percent Change"
+ws.Cells(1, 12).Value = "Total Stock Volume"
+
+'Iteration Loop for Ticker, Yearly Change, Percent Change, and conditional statements
+For i = 2 To LastRow
+    If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+        Ticker = ws.Cells(i, 1).Value
+        Volume = Volume + ws.Cells(i, 7).Value
+        StockClose = Format(ws.Cells(i, 6), "Fixed")
+        YearlyChange = StockClose - StockOpen
+        'Setting this in place to avoid a divide by zero overflow error in PercentChange
+            If (YearlyChange = 0 And StockOpen = 0) Then
+            StockOpen = 1
+            End If
+        PercentChange = Format(YearlyChange / StockOpen, "Percent")
+        ws.Range("I" & Summary).Value = Ticker
+        ws.Range("J" & Summary).Value = YearlyChange
+            If (ws.Range("J" & Summary).Value < 0) Then
+            'Colors the cells red for loss
+            ws.Range("J" & Summary).Interior.ColorIndex = 3
+            ElseIf (ws.Range("J" & Summary).Value > 0) Then
+            'Colors the cells green for gain
+            ws.Range("J" & Summary).Interior.ColorIndex = 4
+            Else
+            End If
+        ws.Range("K" & Summary).Value = PercentChange
+        ws.Range("L" & Summary).Value = Volume
+        Summary = Summary + 1
+        Volume = 0
+        StockOpen = 0
+        StockClose = 0
+    ElseIf (StockOpen = 0) Then
+        StockOpen = ws.Cells(i, 3).Value
+        Volume = Volume + ws.Cells(i, 7).Value
+    Else
+        Volume = Volume + ws.Cells(i, 7).Value
+    End If
+
+Next i
+
+'Defining and setting variables for hard part
+Dim Max As Double
+Dim Min As Double
+Max = 0
+Min = 0
+LastSummaryRow = ws.Cells(Rows.Count, 9).End(xlUp).Row
+
+'Setting up the second summary table
+ws.Cells(1, 16).Value = "Ticker"
+ws.Cells(1, 17).Value = "Value"
+ws.Cells(2, 15).Value = "Greatest % Increase"
+ws.Cells(3, 15).Value = "Greatest % Decrease"
+ws.Cells(4, 15).Value = "Greatest Total Volume"
+
+For j = 2 To LastSummaryRow
+'Finding greatest % increase
+    If (ws.Cells(j, 11).Value >= Max) Then
+    Max = ws.Cells(j, 11).Value
+    ws.Range("Q2").Value = Format(Max, "Percent")
+    ws.Range("P2").Value = ws.Cells(j, 9).Value
+'Finding greatest % decrease
+    ElseIf (ws.Cells(j, 11).Value <= Min) Then
+    Min = ws.Cells(j, 11).Value
+    ws.Range("Q3").Value = Format(Min, "Percent")
+    ws.Range("P3").Value = ws.Cells(j, 9).Value
+    Else
+    End If
+Next j
+
+'Setting maximum variable one last time
+Max = 0
+
+'Last iteration loop for volume
+For k = 2 To LastSummaryRow
+
+'Finding greatest volume
+    If (ws.Cells(k, 12) > Max) Then
+    Max = ws.Cells(k, 12).Value
+    ws.Range("Q4").Value = Max
+    ws.Range("P4") = ws.Cells(k, 9).Value
+    Else
+    End If
+
+Next k
+Next ws
+End Sub
